@@ -2,11 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from routers.connect import router as connect_router
-from routers.profile import router as profile_router
-from routers.submission import router as submission_router
-from routers.problem import router as problem_router
-from routers.contest import router as contest_router
+from leetcode.routers.connect import router as connect_router
+from leetcode.routers.profile import router as profile_router
+from leetcode.routers.submission import router as submission_router
+from leetcode.routers.problem import router as problem_router
+from leetcode.routers.contest import router as contest_router
 
 app = FastAPI()
 

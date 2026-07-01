@@ -1,6 +1,6 @@
 
 from models import CookiePayload
-from services.submission import verify_cookies
+from leetcode.services.submission import verify_cookies
 from fastapi import APIRouter, HTTPException
 
 from store import cookie_store

@@ -2,7 +2,7 @@ import httpx
 
 from common_utils.common_fuctions import graphql_request
 from common_utils.constants import GRAPHQL_URL, LEETCODE_BASE_URL
-from services.graphql.queries import GET_SUBMISSION_LIST_QUERY, GET_SUBMISSIONS_QUERY, GET_SUBMISSION_QUERY, LATEST_SUBMISSION_QUERY, VERIFY_COOKIES_QUERY
+from leetcode.services.graphql.queries import GET_SUBMISSION_LIST_QUERY, GET_SUBMISSIONS_QUERY, GET_SUBMISSION_QUERY, LATEST_SUBMISSION_QUERY, VERIFY_COOKIES_QUERY
 from store import cookie_store
 
 async def verify_cookies(

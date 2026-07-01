@@ -1,5 +1,5 @@
 from common_utils.common_fuctions import graphql_request
-from services.graphql.queries import GET_DAILY_PROBLEM_QUERY, GET_PROBLEM_DETAIL_QUERY, GET_SIMILAR_PROBLEMS_QUERY
+from leetcode.services.graphql.queries import GET_DAILY_PROBLEM_QUERY, GET_PROBLEM_DETAIL_QUERY, GET_SIMILAR_PROBLEMS_QUERY
 from store import cookie_store
 
 async def get_problem_detail(

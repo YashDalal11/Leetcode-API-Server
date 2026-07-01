@@ -1,7 +1,7 @@
 import httpx
 
 from common_utils.common_fuctions import graphql_request
-from services.graphql.queries import GET_LANG_STATS_QUERY, GET_SOLVED_STATS, GET_TOPIC_STATS_QUERY, GET_USER_PUBLIC_PROFILE_QUERY
+from leetcode.services.graphql.queries import GET_LANG_STATS_QUERY, GET_SOLVED_STATS, GET_TOPIC_STATS_QUERY, GET_USER_PUBLIC_PROFILE_QUERY
 
 from store import cookie_store
 

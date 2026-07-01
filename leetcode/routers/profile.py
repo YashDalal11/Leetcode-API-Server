@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from services.profile import get_language_stats, get_profile, get_ranking_and_contributions, get_solved_stats, get_topic_stats
+from leetcode.services.profile import get_language_stats, get_profile, get_ranking_and_contributions, get_solved_stats, get_topic_stats
 from store import cookie_store
 
 router = APIRouter(

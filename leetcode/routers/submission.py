@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from services.submission import get_latest_submission, get_submission_detail, get_submission_history, get_submissions
+from leetcode.services.submission import get_latest_submission, get_submission_detail, get_submission_history, get_submissions
 from store import cookie_store
 
 router = APIRouter(

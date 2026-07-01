@@ -1,5 +1,5 @@
 from common_utils.common_fuctions import graphql_request
-from services.graphql.queries import GET_CONTEST_HISTORY_QUERY, GET_CONTEST_QUESTION_QUERY, GET_CONTEST_RATING_QUERY, GET_UPCOMING_CONTESTS_QUERY
+from leetcode.services.graphql.queries import GET_CONTEST_HISTORY_QUERY, GET_CONTEST_QUESTION_QUERY, GET_CONTEST_RATING_QUERY, GET_UPCOMING_CONTESTS_QUERY
 from store import cookie_store
 
 async def get_contest_rating(username:str):
