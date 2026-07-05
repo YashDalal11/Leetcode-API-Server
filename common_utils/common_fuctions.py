@@ -1,6 +1,25 @@
 import httpx
 
 from common_utils.constants import GRAPHQL_URL, LEETCODE_BASE_URL
+from cryptography.fernet import Fernet
+
+from config import settings
+
+cipher = Fernet(
+    settings.COOKIE_ENCRYPTION_KEY.encode()
+)
+
+
+def encrypt_cookie(cookie: dict) -> str:
+    return cipher.encrypt(
+        str(cookie).encode()
+    ).decode()
+
+
+def decrypt_cookie(cookie: str) -> dict:
+    return eval(cipher.decrypt(
+        cookie.encode()
+    ).decode())
 
 async def graphql_request(
     query: str,
