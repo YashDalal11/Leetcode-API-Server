@@ -114,7 +114,6 @@ async def get_upcoming_contests(username: str):
         variables ={},
         cookies=cookies,
     )
-    print(result)
 
     upcoming_contests = result.get("data", {}).get("topTwoContests",{})
 
