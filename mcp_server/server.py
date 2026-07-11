@@ -37,6 +37,34 @@ from database.session import SessionLocal
 from model.user import User
 from model.leetcode_account import LeetcodeAccount
 from config import settings
+from common_utils.common_fuctions import decrypt_cookie
+from store import cookie_store
+from leetcode.services.connect import LeetcodeService
+from leetcode.services.profile import (
+    get_profile,
+    get_solved_stats,
+    get_ranking_and_contributions,
+    get_topic_stats,
+    get_language_stats,
+)
+from leetcode.services.problem import (
+    get_problem_detail,
+    get_similar_problems,
+    get_daily_problem,
+)
+from leetcode.services.contest import (
+    get_contest_rating,
+    get_contest_history,
+    get_contest_question,
+    get_contest_result,
+    get_upcoming_contests,
+)
+from leetcode.services.submission import (
+    get_latest_submission,
+    get_submission_detail,
+    get_submissions,
+    get_submission_history,
+)
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO)
@@ -252,8 +280,6 @@ class InMemoryOAuthProvider(
 
 
 
-print(f"Starting Leetcode AI MCP Server with PUBLIC_URL={PUBLIC_URL}")
-
 # Create FastMCP instance with "Leetcode AI MCP Server" configuration
 app = FastMCP(
     name="Leetcode AI MCP Server",
@@ -323,6 +349,285 @@ async def google_callback(request: Request):
         state=session["state"]
     )
     return RedirectResponse(redirect_uri)
+
+
+def resolve_username_and_load_cookies(requested_username: str = None) -> str:
+    """
+    Resolves the target username and loads their Leetcode cookies into cookie_store.
+    If requested_username is None, uses the authenticated user's Leetcode username.
+    """
+    token_info = get_access_token()
+    user_id = token_info.subject if token_info else None
+    
+    db = SessionLocal()
+    try:
+        if requested_username:
+            account = db.query(LeetcodeAccount).filter(LeetcodeAccount.leetcode_username == requested_username).first()
+            if not account:
+                raise Exception(f"Leetcode account for '{requested_username}' is not connected.")
+        else:
+            if not user_id or user_id == "anonymous":
+                user = db.query(User).first()
+            else:
+                user = db.query(User).filter(User.id == UUID(user_id)).first()
+                if not user:
+                    user = db.query(User).first()
+            
+            if not user or not user.leetcode_account:
+                raise Exception("Authentication required or no Leetcode account connected to your profile.")
+                
+            account = user.leetcode_account
+            
+        username = account.leetcode_username
+        
+        # Load/update cookies in cookie_store
+        if account.encrypted_cookies:
+            cookies = decrypt_cookie(account.encrypted_cookies)
+            cookie_store[username] = cookies
+            
+        return username
+    finally:
+        db.close()
+
+
+@app.tool()
+async def connect_leetcode_account(leetcode_session: str, csrf_token: str) -> str:
+    """
+    Connect your Leetcode account to your profile using session cookies.
+    """
+    token_info = get_access_token()
+    if not token_info or not token_info.subject:
+        return "Authentication required. Please authenticate the MCP client first."
+    
+    user_id = token_info.subject
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == UUID(user_id)).first()
+        if not user:
+            user = db.query(User).first()
+        if not user:
+            return "User not found in database."
+            
+        account = await LeetcodeService.connect_account(
+            db=db,
+            user=user,
+            leetcode_session=leetcode_session,
+            csrf_token=csrf_token,
+        )
+        return f"Successfully connected Leetcode account: {account.leetcode_username}"
+    except Exception as e:
+        return f"Failed to connect account: {str(e)}"
+    finally:
+        db.close()
+
+
+@app.tool()
+async def get_profile_details(username: str = None) -> dict:
+    """
+    Get the profile details for a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_profile(target_username)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_solved_statistics(username: str = None) -> dict:
+    """
+    Get the solved problem statistics (counts by difficulty) for a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_solved_stats(target_username)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_user_ranking_and_contributions(username: str = None) -> dict:
+    """
+    Get the ranking and contributions points for a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_ranking_and_contributions(target_username)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_user_topic_stats(username: str = None) -> dict:
+    """
+    Get the detailed topic stats (solved counts by advanced, intermediate, fundamental topics) for a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_topic_stats(target_username)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_user_language_stats(username: str = None) -> dict:
+    """
+    Get solved problem counts by programming language for a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_language_stats(target_username)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_problem_details(titleSlug: str, username: str = None) -> dict:
+    """
+    Get detail of a specific Leetcode question by its titleSlug.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_problem_detail(target_username, titleSlug)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_similar_problems_list(titleSlug: str, username: str = None) -> dict:
+    """
+    Get similar problems and next challenges for a specific Leetcode question by its titleSlug.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_similar_problems(target_username, titleSlug)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_daily_leetcode_challenge(username: str = None) -> dict:
+    """
+    Get the active Leetcode Daily Coding Challenge details.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_daily_problem(target_username)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_contest_rating_details(username: str = None) -> dict:
+    """
+    Get the contest ranking and rating details of a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        res = await get_contest_rating(target_username)
+        return res if res else {"message": "No contest rating found."}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_contest_participation_history(username: str = None) -> list:
+    """
+    Get the complete contest participation history of a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        res = await get_contest_history(target_username)
+        return res if res else []
+    except Exception as e:
+        return [{"error": str(e)}]
+
+
+@app.tool()
+async def get_contest_questions_list(contest_slug: str, username: str = None) -> dict:
+    """
+    Get the list of questions of a specific Leetcode contest by its slug.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        res = await get_contest_question(target_username, contest_slug)
+        return res if res else {"message": "Contest question list not found."}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_user_contest_result(contest_slug: str, username: str = None) -> dict:
+    """
+    Get the detailed result (rank, problems solved, total time, rating) of a Leetcode user for a specific contest.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_contest_result(target_username, contest_slug)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_upcoming_contests_list(username: str = None) -> list:
+    """
+    Get the upcoming Leetcode contests.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        res = await get_upcoming_contests(target_username)
+        return res if res else []
+    except Exception as e:
+        return [{"error": str(e)}]
+
+
+@app.tool()
+async def get_user_latest_submission(username: str = None) -> dict:
+    """
+    Get the details of the latest submission made by a Leetcode user.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        res = await get_latest_submission(target_username)
+        return res if res else {"message": "No submissions found."}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_leetcode_submission_detail(submission_id: str, username: str = None) -> dict:
+    """
+    Get full details of a specific Leetcode submission (including source code, runtime, memory, correctness) by its ID.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_submission_detail(target_username, submission_id)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_recent_submissions(limit: int = 20, offset: int = 0, username: str = None) -> dict:
+    """
+    Get recent submissions list of a Leetcode user (maximum limit 20).
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_submissions(target_username, limit, offset)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.tool()
+async def get_question_submission_history(questionSlug: str, limit: int = 20, offset: int = 0, username: str = None) -> dict:
+    """
+    Get the list of all historical submissions of a Leetcode user for a specific question.
+    """
+    try:
+        target_username = resolve_username_and_load_cookies(username)
+        return await get_submission_history(target_username, questionSlug, limit, offset)
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.tool()
