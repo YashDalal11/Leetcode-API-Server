@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from auth.router import router as auth_router
+from auth.router import router as auth_router, metadata_router
 from leetcode.routers.connect import router as connect_router
 from leetcode.routers.profile import router as profile_router
 from leetcode.routers.submission import router as submission_router
@@ -30,6 +30,7 @@ app.add_middleware(
 
 
 app.include_router(auth_router)
+app.include_router(metadata_router)
 app.include_router(connect_router)
 app.include_router(profile_router)
 app.include_router(submission_router)

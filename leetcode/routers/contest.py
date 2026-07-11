@@ -1,6 +1,4 @@
-from http.client import HTTPException
-
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from leetcode.services.contest import get_contest_history, get_contest_question, get_contest_rating, get_contest_result, get_upcoming_contests
 from store import cookie_store
 

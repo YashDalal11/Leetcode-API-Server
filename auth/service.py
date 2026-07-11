@@ -1,4 +1,4 @@
-from http.client import HTTPException
+from fastapi import HTTPException
 
 from alembic.util import status
 from click import UUID
@@ -57,20 +57,20 @@ class AuthService:
 
             if payload is None:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    status_code=401,
                     detail="Invalid or expired token",
                 )
 
         except Exception as e:
 
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail=str(e),
             )
 
         if payload.get("type") != "access":
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail="Invalid access token",
             )
 
@@ -81,7 +81,7 @@ class AuthService:
         except Exception:
 
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail="Invalid user id",
             )
 
@@ -94,7 +94,7 @@ class AuthService:
         if user is None:
 
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 detail="User not found",
             )
 
