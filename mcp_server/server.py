@@ -43,7 +43,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mcp_server")
 
 # Base URLs and Google Credentials
-PUBLIC_URL = os.environ.get("MCP_BASE_URL", "http://localhost:8000").rstrip("/")
+# PUBLIC_URL = os.environ.get("MCP_BASE_URL", "http://localhost:8000").rstrip("/")
+PUBLIC_URL = settings.MCP_BASE_URL.rstrip("/")
 GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
 
@@ -76,7 +77,7 @@ class InMemoryOAuthProvider(
             redirect_uris=[
                 "http://localhost:6274/oauth/callback",
                 "http://localhost:6274/callback",
-                "http://localhost:8000/callback",
+                f"{PUBLIC_URL}/callback",
             ],
             grant_types=["authorization_code", "refresh_token"],
             response_types=["code"],
@@ -249,6 +250,9 @@ class InMemoryOAuthProvider(
     async def revoke_token(self, token: AccessToken | RefreshToken) -> None:
         pass
 
+
+
+print(f"Starting Leetcode AI MCP Server with PUBLIC_URL={PUBLIC_URL}")
 
 # Create FastMCP instance with "Leetcode AI MCP Server" configuration
 app = FastMCP(
