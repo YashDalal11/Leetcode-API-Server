@@ -9,6 +9,7 @@ from database.base import Base
 from model.user import User
 from model.leetcode_account import LeetcodeAccount
 from model.refresh_token import RefreshToken
+from model.mcp_oauth import McpOAuthClient, McpOAuthSession, McpOAuthCode, McpOAuthRefreshToken
 from config import settings
 
 # this is the Alembic Config object, which provides
